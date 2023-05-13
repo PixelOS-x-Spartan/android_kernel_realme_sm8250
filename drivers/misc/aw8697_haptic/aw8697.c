@@ -80,11 +80,9 @@
 struct pm_qos_request pm_qos_req_vb;
 
 static uint8_t AW8697_HAPTIC_RAM_VBAT_COMP_GAIN;
-#ifdef CONFIG_OPLUS_HAPTIC_OOS
-static uint8_t AW8697_HAPTIC_HIGH_LEVEL_REG_VAL = 0x16;
-#else
-static uint8_t AW8697_HAPTIC_HIGH_LEVEL_REG_VAL = 0x18;
-#endif
+
+static uint8_t AW8697_HAPTIC_HIGH_LEVEL_REG_VAL = 0x28;
+
 
 #define AW8697_RTP_NAME_MAX 64
 //static char *aw8697_ram_name = "aw8697_haptic.bin";
@@ -11647,6 +11645,7 @@ struct aw8697_vmax_map {
 };
 #ifdef CONFIG_OPLUS_HAPTIC_OOS
 static struct aw8697_vmax_map vmax_map[] = {
+<<<<<<< HEAD
 	{ 800, 0x00, 0x30 },  { 900, 0x00, 0x36 },  { 1000, 0x00, 0x42 },
 	{ 1100, 0x00, 0x48 }, { 1200, 0x00, 0x54 }, { 1300, 0x00, 0x60 },
 	{ 1400, 0x00, 0x64 }, { 1500, 0x00, 0x70 }, { 1600, 0x00, 0x75 },
@@ -11662,6 +11661,51 @@ static struct aw8697_vmax_map vmax_map[] = {
 	{ 1700, 0x04, 0x80 }, { 1800, 0x07, 0x80 }, { 1900, 0x0A, 0x80 },
 	{ 2000, 0x0D, 0x80 }, { 2100, 0x10, 0x80 }, { 2200, 0x12, 0x80 },
 	{ 2300, 0x15, 0x80 }, { 2400, 0x18, 0x80 },
+=======
+	{800,  0x00, 0x40},
+	{900,  0x00, 0x49},
+	{1000, 0x00, 0x51},
+	{1100, 0x00, 0x5A},
+	{1200, 0x00, 0x62},
+	{1300, 0x00, 0x6B},
+	{1400, 0x00, 0x73},
+	{1500, 0x00, 0x7C},
+	{1600, 0x01, 0x80},
+	{1700, 0x04, 0x80},
+	{1800, 0x07, 0x80},
+	{1900, 0x0A, 0x80},
+	{2000, 0x0D, 0x80},
+	{2100, 0x12, 0x80},
+	{2200, 0x14, 0x80},
+	{2300, 0x16, 0x80},
+	{2400, 0x18, 0x80},
+	{2700, 0x20, 0x80},
+	{3000, 0x22, 0x80},
+	{3300, 0x28, 0x80},
+};
+#else
+static struct aw8697_vmax_map vmax_map[] = {
+	{800,  0x00, 0x40},
+	{900,  0x00, 0x49},
+	{1000, 0x00, 0x51},
+	{1100, 0x00, 0x5A},
+	{1200, 0x00, 0x62},
+	{1300, 0x00, 0x6B},
+	{1400, 0x00, 0x73},
+	{1500, 0x00, 0x7C},
+	{1600, 0x01, 0x80},
+	{1700, 0x04, 0x80},
+	{1800, 0x07, 0x80},
+	{1900, 0x0A, 0x80},
+	{2000, 0x0D, 0x80},
+	{2100, 0x12, 0x80},
+	{2200, 0x14, 0x80},
+	{2300, 0x16, 0x80},
+	{2400, 0x18, 0x80},
+	{2700, 0x20, 0x80},
+	{3000, 0x22, 0x80},
+	{3300, 0x28, 0x80},
+>>>>>>> 13bdda23eb05 (drivers: misc: aw8697_haptic: Modify largest vmax to be stronger)
 };
 #endif
 
@@ -11711,7 +11755,7 @@ static ssize_t aw8697_vmax_store(struct device *dev,
 #ifdef OPLUS_FEATURE_CHG_BASIC
 	if (val <= 255) {
 		aw8697->gain = (val * AW8697_HAPTIC_RAM_VBAT_COMP_GAIN) / 255;
-	} else if (val <= 2400) {
+	} else if (val <= 3600) {
 		aw8697_convert_level_to_vmax(aw8697, val);
 	} else {
 		aw8697->vmax = AW8697_HAPTIC_HIGH_LEVEL_REG_VAL;
@@ -14131,6 +14175,7 @@ static int aw8697_parse_dt(struct device *dev, struct aw8697 *aw8697,
 		dev_info(dev, "%s: irq gpio provided ok.\n", __func__);
 	}
 #ifdef OPLUS_FEATURE_CHG_BASIC
+<<<<<<< HEAD
 	if (of_property_read_u32(np, "qcom,device_id", &aw8697->device_id))
 		aw8697->device_id = 815;
 	dev_info(dev, "%s: aw8697->device_id=%d\n", __func__,
@@ -14142,6 +14187,12 @@ static int aw8697_parse_dt(struct device *dev, struct aw8697 *aw8697,
 #else
 		AW8697_HAPTIC_HIGH_LEVEL_REG_VAL = 0x18;
 #endif
+=======
+    if (of_property_read_u32(np, "qcom,device_id", &aw8697->device_id))
+        aw8697->device_id = 815;
+    dev_info(dev, "%s: aw8697->device_id=%d\n", __func__, aw8697->device_id);
+	if (of_property_read_u8(np, "qcom,aw8697_boost_voltage", &AW8697_HAPTIC_HIGH_LEVEL_REG_VAL)) {
+>>>>>>> 13bdda23eb05 (drivers: misc: aw8697_haptic: Modify largest vmax to be stronger)
 	}
 	dev_info(dev, "%s: aw8697 boost_voltage=%d\n", __func__,
 		 AW8697_HAPTIC_HIGH_LEVEL_REG_VAL);
