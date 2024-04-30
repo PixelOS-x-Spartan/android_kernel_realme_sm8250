@@ -10750,7 +10750,7 @@ static long aw8697_file_unlocked_ioctl(struct file *file, unsigned int cmd,
 #endif
 	int ret = 0;
 
-	dev_info(aw8697->dev, "%s: cmd=0x%x, arg=0x%lx\n", __func__, cmd, arg);
+	dev_dbg(aw8697->dev, "%s: cmd=0x%x, arg=0x%lx\n", __func__, cmd, arg);
 
 	mutex_lock(&aw8697->lock);
 #ifdef AAC_RICHTAP
