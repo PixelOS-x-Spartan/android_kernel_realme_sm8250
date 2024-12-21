@@ -553,3 +553,28 @@ void oplus_wpc_init(struct oplus_wpc_chip *chip)
 {
 	g_wpc_chip = chip;
 }
+
+/*
+ * Stub implementations for symbols defined in oplus_wlchg_policy.c on oneplus
+ * builds. On non-oneplus (realme) builds, oplus_wireless.c is compiled instead
+ * and these are no-ops.
+ */
+struct smb_charger;
+
+int switch_to_otg_mode(bool enable)
+{
+	return 0;
+}
+
+void notify_pd_in_to_wireless(void)
+{
+}
+
+void exchg_information_register(struct smb_charger *chg)
+{
+}
+
+void exfg_information_register(struct oplus_gauge_operations *exfg)
+{
+}
+EXPORT_SYMBOL(exfg_information_register);

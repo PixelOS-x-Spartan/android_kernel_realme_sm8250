@@ -337,6 +337,7 @@ endif # BRAND_SHOW_FLAG
 else
 obj-y	+= oplus_wireless.o
 endif # CONFIG_OPLUS_CHARGER_MTK
+CFLAGS_oplus_wireless.o += -UOPLUS_CUSTOM_OP_DEF
 
 obj-y	+= oplus_short.o
 obj-y   += oplus_debug_info.o
