@@ -4555,7 +4555,6 @@ static int sec_tp_probe(struct i2c_client *client,
 	ts->ts_ops = &sec_ops;
 	ts->aging_test_ops = &aging_test_proc_ops;
 	g_chip_info = chip_info;
-	ts->calibration_support = true;
 
 	/* 5. register common touch device*/
 	ret = register_common_touch_device(ts);
