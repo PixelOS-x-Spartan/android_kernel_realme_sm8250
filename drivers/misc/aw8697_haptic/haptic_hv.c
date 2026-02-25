@@ -678,16 +678,16 @@ static char aw_rtp_name_162Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_162Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_162Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_162Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_162Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_162Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_162Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
 	{ "aw8697_reserved_167.bin" },
 	{ "aw8697_reserved_168.bin" },
 	{ "aw8697_reserved_169.bin" },
-	{ "aw8697_oplus_gt_RTP_170_162Hz.bin" },
+	{ "aw8697_realme_gt_RTP_170_162Hz.bin" },
 
 	{ "aw8697_Threefingers_Long_RTP_171.bin" },
 	{ "aw8697_Threefingers_Up_RTP_172.bin" },
@@ -1109,16 +1109,16 @@ static char aw_rtp_name_166Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_166Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_166Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_166Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_166Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_166Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_166Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
 	{ "aw8697_reserved_167.bin" },
 	{ "aw8697_reserved_168.bin" },
 	{ "aw8697_reserved_169.bin" },
-	{ "aw8697_oplus_gt_RTP_170_166Hz.bin" },
+	{ "aw8697_realme_gt_RTP_170_166Hz.bin" },
 
 	{ "aw8697_Threefingers_Long_RTP_171.bin" },
 	{ "aw8697_Threefingers_Up_RTP_172.bin" },
@@ -1538,16 +1538,16 @@ static char aw_rtp_name_174Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_174Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_174Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_174Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_174Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_174Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_174Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
 	{ "aw8697_reserved_167.bin" },
 	{ "aw8697_reserved_168.bin" },
 	{ "aw8697_reserved_169.bin" },
-	{ "aw8697_oplus_gt_RTP_170_174Hz.bin" },
+	{ "aw8697_realme_gt_RTP_170_174Hz.bin" },
 
 	{ "aw8697_Threefingers_Long_RTP_171.bin" },
 	{ "aw8697_Threefingers_Up_RTP_172.bin" },
@@ -1969,16 +1969,16 @@ static char aw_rtp_name_178Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_178Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_178Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_178Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_178Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_178Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_178Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
 	{ "aw8697_reserved_167.bin" },
 	{ "aw8697_reserved_168.bin" },
 	{ "aw8697_reserved_169.bin" },
-	{ "aw8697_oplus_gt_RTP_170_178Hz.bin" },
+	{ "aw8697_realme_gt_RTP_170_178Hz.bin" },
 
 	{ "aw8697_Threefingers_Long_RTP_171.bin" },
 	{ "aw8697_Threefingers_Up_RTP_172.bin" },
@@ -2404,16 +2404,16 @@ static char aw_rtp_name[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_170Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_170Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_170Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_170Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_170Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_170Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
 	{ "aw8697_reserved_167.bin" },
 	{ "aw8697_reserved_168.bin" },
 	{ "aw8697_reserved_169.bin" },
-	{ "aw8697_oplus_gt_RTP_170_170Hz.bin" },
+	{ "aw8697_realme_gt_RTP_170_170Hz.bin" },
 
 	{ "aw8697_Threefingers_Long_RTP_171.bin" },
 	{ "aw8697_Threefingers_Up_RTP_172.bin" },
@@ -2852,9 +2852,9 @@ static char aw_rtp_name_19065_226Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_235Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_235Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_235Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_235Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_235Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_235Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
@@ -3044,9 +3044,9 @@ static char aw_rtp_name_19065_230Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_235Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_235Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_235Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_235Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_235Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_235Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
@@ -3237,9 +3237,9 @@ static char aw_rtp_name_19065_234Hz[][AW_RTP_NAME_MAX] = {
 	{ "aw8697_reserved_159.bin" },
 	{ "aw8697_reserved_160.bin" },
 
-	{ "aw8697_oplus_its_oplus_RTP_161_235Hz.bin" },
-	{ "aw8697_oplus_tune_RTP_162_235Hz.bin" },
-	{ "aw8697_oplus_jingle_RTP_163_235Hz.bin" },
+	{ "aw8697_realme_its_realme_RTP_161_235Hz.bin" },
+	{ "aw8697_realme_tune_RTP_162_235Hz.bin" },
+	{ "aw8697_realme_jingle_RTP_163_235Hz.bin" },
 	{ "aw8697_reserved_164.bin" },
 	{ "aw8697_reserved_165.bin" },
 	{ "aw8697_reserved_166.bin" },
@@ -5117,8 +5117,8 @@ static void audio_ctrl_list_clr(struct aw_haptic_audio *haptic_audio)
 	struct aw_haptic_ctr *p_ctr = NULL;
 	struct aw_haptic_ctr *p_ctr_bak = NULL;
 
-	list_for_each_entry_safe_reverse(p_ctr, p_ctr_bak,
-					 &(haptic_audio->ctr_list), list) {
+	list_for_each_entry_safe_reverse (p_ctr, p_ctr_bak,
+					  &(haptic_audio->ctr_list), list) {
 		list_del(&p_ctr->list);
 		kfree(p_ctr);
 	}
@@ -5178,20 +5178,20 @@ static void audio_work_routine(struct work_struct *work)
 	mutex_lock(&aw_haptic->haptic_audio.lock);
 	memset(&aw_haptic->haptic_audio.ctr, 0, sizeof(struct aw_haptic_ctr));
 	ctr_list_flag = 0;
-	list_for_each_entry_safe_reverse(p_ctr, p_ctr_bak,
-					 &(haptic_audio->ctr_list), list) {
+	list_for_each_entry_safe_reverse (p_ctr, p_ctr_bak,
+					  &(haptic_audio->ctr_list), list) {
 		ctr_list_flag = 1;
 		break;
 	}
 	if (ctr_list_flag == 0)
 		aw_dev_info("%s: ctr list empty\n", __func__);
 	if (ctr_list_flag == 1) {
-		list_for_each_entry_safe(p_ctr, p_ctr_bak,
-					 &(haptic_audio->ctr_list), list) {
+		list_for_each_entry_safe (p_ctr, p_ctr_bak,
+					  &(haptic_audio->ctr_list), list) {
 			ctr_list_input_cnt = p_ctr->cnt;
 			break;
 		}
-		list_for_each_entry_safe_reverse(
+		list_for_each_entry_safe_reverse (
 			p_ctr, p_ctr_bak, &(haptic_audio->ctr_list), list) {
 			ctr_list_output_cnt = p_ctr->cnt;
 			break;
@@ -5205,7 +5205,7 @@ static void audio_work_routine(struct work_struct *work)
 				32 + ctr_list_input_cnt - ctr_list_output_cnt;
 		}
 		if (ctr_list_diff_cnt > 2) {
-			list_for_each_entry_safe_reverse(
+			list_for_each_entry_safe_reverse (
 				p_ctr, p_ctr_bak, &(haptic_audio->ctr_list),
 				list) {
 				if ((p_ctr->play == 0) &&
@@ -5221,8 +5221,8 @@ static void audio_work_routine(struct work_struct *work)
 		}
 	}
 	/* get the last data from list */
-	list_for_each_entry_safe_reverse(p_ctr, p_ctr_bak,
-					 &(haptic_audio->ctr_list), list) {
+	list_for_each_entry_safe_reverse (p_ctr, p_ctr_bak,
+					  &(haptic_audio->ctr_list), list) {
 		aw_haptic->haptic_audio.ctr.cnt = p_ctr->cnt;
 		aw_haptic->haptic_audio.ctr.cmd = p_ctr->cmd;
 		aw_haptic->haptic_audio.ctr.play = p_ctr->play;

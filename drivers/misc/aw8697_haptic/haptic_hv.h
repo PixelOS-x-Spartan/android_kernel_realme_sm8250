@@ -518,7 +518,7 @@ enum aw_haptic_motor_old_test_mode {
 #define AW869X_FIFO_AE_ADDR_H(base_addr) (((base_addr) >> 1) >> 8)
 #define AW869X_FIFO_AE_ADDR_L(base_addr) (((base_addr) >> 1) & 0x00ff)
 #define AW869X_FIFO_AF_ADDR_H(base_addr) (((base_addr) - (base_addr >> 2)) >> 8)
-#define AW869X_FIFO_AF_ADDR_L(base_addr) \
+#define AW869X_FIFO_AF_ADDR_L(base_addr)                                       \
 	(((base_addr) - ((base_addr) >> 2)) & 0x00ff)
 /*********************************************************
  *
@@ -527,7 +527,7 @@ enum aw_haptic_motor_old_test_mode {
  *********************************************************/
 #define AW8692X_REG_SUM (88)
 #define AW8692X_VBAT_MAX (5500)
-#define AW8692X_LRA_FORMULA(lra, d2s_gain) \
+#define AW8692X_LRA_FORMULA(lra, d2s_gain)                                     \
 	((6075 * 100 * (lra)) / (1024 * (d2s_gain)))
 #define AW8692X_VBAT_FORMULA(vbat) (5 * 1215 * (vbat) / 1024)
 #define AW8692X_SET_RAMADDR_H(base_addr) ((base_addr) >> 8)
@@ -536,12 +536,12 @@ enum aw_haptic_motor_old_test_mode {
 #define AW8692X_SET_BASEADDR_L(base_addr) ((base_addr) & 0x00FF)
 #define AW8692X_SET_FIFO_AE_ADDR_H(base_addr) ((((base_addr) >> 1) >> 4) & 0xF0)
 #define AW8692X_SET_FIFO_AE_ADDR_L(base_addr) (((base_addr) >> 1) & 0x00ff)
-#define AW8692X_SET_FIFO_AF_ADDR_H(base_addr) \
+#define AW8692X_SET_FIFO_AF_ADDR_H(base_addr)                                  \
 	((((base_addr) - (base_addr >> 2)) >> 8) & 0x0F)
-#define AW8692X_SET_FIFO_AF_ADDR_L(base_addr) \
+#define AW8692X_SET_FIFO_AF_ADDR_L(base_addr)                                  \
 	(((base_addr) - ((base_addr) >> 2)) & 0x00ff)
 
-#define AW_DRV_WIDTH_FARMULA(f0_pre, brk_gain, track_margain) \
+#define AW_DRV_WIDTH_FARMULA(f0_pre, brk_gain, track_margain)                  \
 	(240000 / (f0_pre) - 8 - (brk_gain) - (track_margain))
 
 /*********************************************************
@@ -981,9 +981,9 @@ struct aw_que_seq {
 
 #define AW_HAPTIC_IOCTL_MAGIC 'h'
 
-#define AW_HAPTIC_SET_QUE_SEQ \
+#define AW_HAPTIC_SET_QUE_SEQ                                                  \
 	_IOWR(AW_HAPTIC_IOCTL_MAGIC, 1, struct aw_que_seq *)
-#define AW_HAPTIC_SET_SEQ_LOOP \
+#define AW_HAPTIC_SET_SEQ_LOOP                                                 \
 	_IOWR(AW_HAPTIC_IOCTL_MAGIC, 2, struct aw_seq_loop *)
 #define AW_HAPTIC_PLAY_QUE_SEQ _IOWR(AW_HAPTIC_IOCTL_MAGIC, 3, unsigned int)
 #define AW_HAPTIC_SET_BST_VOL _IOWR(AW_HAPTIC_IOCTL_MAGIC, 4, unsigned int)

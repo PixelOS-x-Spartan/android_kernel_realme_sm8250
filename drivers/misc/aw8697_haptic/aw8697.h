@@ -392,6 +392,7 @@ struct aw8697 {
 	struct hrtimer timer;
 	struct work_struct vibrator_work;
 	struct work_struct rtp_work;
+	struct work_struct rtp_key_work;
 	struct work_struct rtp_single_cycle_work;
 	struct work_struct rtp_regroup_work;
 	struct delayed_work ram_work;
@@ -416,6 +417,7 @@ struct aw8697 {
 	unsigned long int microsecond;
 	unsigned int sys_frequency;
 	unsigned int rtp_len;
+	int oos_shortvib_flag;
 #ifdef CONFIG_OPLUS_HAPTIC_OOS
 	unsigned int sin_num;
 	size_t sin_data_lenght;
@@ -523,18 +525,18 @@ struct aw8697_que_seq {
 
 #define AW8697_HAPTIC_IOCTL_MAGIC 'h'
 
-#define AW8697_HAPTIC_SET_QUE_SEQ \
+#define AW8697_HAPTIC_SET_QUE_SEQ                                              \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 1, struct aw8697_que_seq *)
-#define AW8697_HAPTIC_SET_SEQ_LOOP \
+#define AW8697_HAPTIC_SET_SEQ_LOOP                                             \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 2, struct aw8697_seq_loop *)
-#define AW8697_HAPTIC_PLAY_QUE_SEQ \
+#define AW8697_HAPTIC_PLAY_QUE_SEQ                                             \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 3, unsigned int)
-#define AW8697_HAPTIC_SET_BST_VOL \
+#define AW8697_HAPTIC_SET_BST_VOL                                              \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 4, unsigned int)
-#define AW8697_HAPTIC_SET_BST_PEAK_CUR \
+#define AW8697_HAPTIC_SET_BST_PEAK_CUR                                         \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 5, unsigned int)
 #define AW8697_HAPTIC_SET_GAIN _IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 6, unsigned int)
-#define AW8697_HAPTIC_PLAY_REPEAT_SEQ \
+#define AW8697_HAPTIC_PLAY_REPEAT_SEQ                                          \
 	_IOWR(AW8697_HAPTIC_IOCTL_MAGIC, 7, unsigned int)
 
 #ifdef OPLUS_FEATURE_CHG_BASIC
@@ -590,8 +592,8 @@ struct aw8697_que_seq {
 #define NEW_RING_END 160
 #define OS12_NEW_RING_START 70
 #define OS12_NEW_RING_END 89
-#define OPLUS_RING_START 161
-#define OPLUS_RING_END 167
+#define REALME_RING_START 161
+#define REALME_RING_END 167
 #define OS14_NEW_RING_START 371
 #define OS14_NEW_RING_END 410
 
