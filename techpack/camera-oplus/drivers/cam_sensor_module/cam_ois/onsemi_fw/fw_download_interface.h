@@ -29,6 +29,7 @@ bool IsOISReady(struct cam_ois_ctrl_t *o_ctrl);
 void InitOIS(struct cam_ois_ctrl_t *o_ctrl);
 void DeinitOIS(struct cam_ois_ctrl_t *o_ctrl);
 void InitOISResource(struct cam_ois_ctrl_t *o_ctrl);
+void forceExitpoll(struct cam_ois_ctrl_t *o_ctrl);
 
 #endif
 /* _DOWNLOAD_OIS_FW_H_ */
