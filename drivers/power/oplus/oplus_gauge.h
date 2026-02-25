@@ -60,7 +60,6 @@ struct oplus_gauge_operations {
 	int (*get_battery_qs)(void);
 	int (*get_battery_temperature)(void);
 	bool (*is_battery_present)(void);
-	int (*get_batt_design_capacity)(void);
 	int (*get_batt_remaining_capacity)(void);
 	int (*get_battery_soc)(void);
 	int (*get_average_current)(void);
@@ -100,6 +99,7 @@ struct oplus_gauge_operations {
 	bool (*set_gauge_power_sel)(int sel);
 	bool (*check_rc_sfr)(void);
 	int (*soft_reset_rc_sfr)(void);
+	void (*cal_model_check)(bool ffc_state);
 };
 
 /****************************************
@@ -137,7 +137,6 @@ int oplus_gauge_get_batt_temperature(void);
 int oplus_gauge_get_batt_soc(void);
 int oplus_gauge_get_batt_current(void);
 int oplus_gauge_get_sub_current(void);
-int oplus_gauge_get_design_capacity(void);
 int oplus_gauge_get_remaining_capacity(void);
 int oplus_gauge_get_device_type(void);
 int oplus_gauge_get_device_type_for_vooc(void);
@@ -194,6 +193,7 @@ int oplus_gauge_get_prev_bcc_parameters(char *buf);
 int oplus_gauge_set_bcc_parameters(const char *buf);
 bool oplus_gauge_check_rc_sfr(void);
 int oplus_gauge_soft_reset_rc_sfr(void);
+void oplus_gauge_cal_model_check(bool ffc_state);
 
 #if defined(CONFIG_OPLUS_CHARGER_MTK6763) || defined(CONFIG_OPLUS_CHARGER_MTK6771)
 extern int oplus_fuelgauged_init_flag;

@@ -4511,8 +4511,8 @@ restore_adc_config:
 	/* Restore ADC channel config */
 	if (chg->wa_flags & USBIN_ADC_WA) {
 		rc = smblib_write(chg, BATIF_ADC_CHANNEL_EN_REG, reg);
-		if (rc < 0)
-			smblib_err(chg, "Couldn't write ADC config rc=%d\n", rc);
+	    if (rc < 0)
+		    smblib_err(chg, "Couldn't write ADC config rc=%d\n", rc);
 	}
 
 unlock:
@@ -7032,7 +7032,7 @@ irqreturn_t usb_source_change_irq_handler(int irq, void *data)
 #ifdef OPLUS_FEATURE_CHG_BASIC
 	if ((bool)(stat & APSD_DTC_STATUS_DONE_BIT)) {
 		cancel_delayed_work(&g_oplus_chip->update_work);
-		oplus_chg_wake_update_work();
+	    oplus_chg_wake_update_work();
 	}
 #endif
 
@@ -12768,9 +12768,6 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_COUNTER,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
 	POWER_SUPPLY_PROP_RECHARGE_SOC,
-#ifdef OPLUS_FEATURE_CHG_BASIC
-	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
-#endif
 	POWER_SUPPLY_PROP_CHARGE_FULL,
 	POWER_SUPPLY_PROP_FORCE_RECHARGE,
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
@@ -12916,8 +12913,6 @@ static int smb5_batt_get_prop(struct power_supply *psy, enum power_supply_proper
 		break;
 	case POWER_SUPPLY_PROP_CYCLE_COUNT:
 		rc = smblib_get_prop_from_bms(chg, POWER_SUPPLY_PROP_CYCLE_COUNT, val);
-				if (g_oplus_chip)
-						val->intval = g_oplus_chip->batt_cc;
 		break;
 	case POWER_SUPPLY_PROP_RECHARGE_SOC:
 		val->intval = chg->auto_recharge_soc;
@@ -12925,22 +12920,8 @@ static int smb5_batt_get_prop(struct power_supply *psy, enum power_supply_proper
 	case POWER_SUPPLY_PROP_CHARGE_QNOVO_ENABLE:
 		val->intval = 0;
 		break;
-#ifdef OPLUS_FEATURE_CHG_BASIC
-	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		if (g_oplus_chip) {
-			val->intval = oplus_gauge_get_design_capacity() * 1000 * g_oplus_chip->vbatt_num;
-		} else {
-			val->intval = -ENODATA;
-		}
-		break;
-#endif
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 		rc = smblib_get_prop_from_bms(chg, POWER_SUPPLY_PROP_CHARGE_FULL, val);
-#ifdef OPLUS_FEATURE_CHG_BASIC
-		if (g_oplus_chip) {
-			val->intval = g_oplus_chip->batt_fcc * 1000;
-		}
-#endif
 		break;
 	case POWER_SUPPLY_PROP_FORCE_RECHARGE:
 		val->intval = 0;
@@ -13873,7 +13854,7 @@ static int smb5_init_hw(struct smb5 *chip)
 	if (rc < 0)
 		return rc;
 
-		/*
+	/*
 	 * AICL configuration: enable aicl and aicl rerun and based on DT
 	 * configuration enable/disable ADB based AICL and Suspend on collapse.
 	 */

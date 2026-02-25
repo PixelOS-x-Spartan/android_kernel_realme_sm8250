@@ -725,6 +725,7 @@ struct oplus_voocphy_manager {
 	bool force_3a_flag;
 	bool btb_temp_over;
 	bool btb_err_first;
+	bool vbatt_ovp_status;
 	bool usb_bad_connect;
 	bool fastchg_ing;
 	bool fastchg_dummy_start;
@@ -842,6 +843,7 @@ struct oplus_voocphy_manager {
 	unsigned int vooc_ntime_full_voltage;
 	int ovp_reg;
 	int ocp_reg;
+	int reg_ctrl_1;
 	int adapter_check_vooc_head_count;
 	int adapter_check_cmd_data_count;
 
@@ -1066,4 +1068,5 @@ void oplus_voocphy_clear_variables(void);
 void oplus_voocphy_turn_off_fastchg(void);
 int oplus_voocphy_get_cp_enable(void);
 int oplus_voocphy_set_ufcs_enable(bool enable);
+bool oplus_voocphy_get_vbatt_ovp_status(void);
 #endif /* _OPLUS_VOOCPHY_H_ */

@@ -390,17 +390,23 @@ struct oplus_chg_mod {
 
 #define OPLUS_CHG_EXTEN_RWATTR(__prop, __name)                                                                         \
 	{                                                                                                              \
-		.exten_prop = __prop, .show = __name##_show, .store = __name##_store,                                  \
+		.exten_prop = __prop,                                                                                  \
+		.show = __name##_show,                                                                                 \
+		.store = __name##_store,                                                                               \
 	}
 
 #define OPLUS_CHG_EXTEN_ROATTR(__prop, __name)                                                                         \
 	{                                                                                                              \
-		.exten_prop = __prop, .show = __name##_show, .store = NULL,                                            \
+		.exten_prop = __prop,                                                                                  \
+		.show = __name##_show,                                                                                 \
+		.store = NULL,                                                                                         \
 	}
 
 #define OPLUS_CHG_EXTEN_WOATTR(__prop, __name)                                                                         \
 	{                                                                                                              \
-		.exten_prop = __prop, .show = NULL, .store = __name##_store,                                           \
+		.exten_prop = __prop,                                                                                  \
+		.show = NULL,                                                                                          \
+		.store = __name##_store,                                                                               \
 	}
 
 extern struct atomic_notifier_head oplus_chg_event_notifier;

@@ -17,7 +17,11 @@
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/string.h>
-
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
+#include <soc/oplus/system/kernel_fb.h>
+#elif defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+#include <linux/oplus_kevent.h>
+#endif
 #include "oplus_chg_track.h"
 #include "oplus_charger.h"
 #include "oplus_gauge.h"
@@ -652,6 +656,7 @@ struct oplus_chg_track_status {
 	int wls_max_power;
 	struct oplus_chg_track_app_status app_status;
 	int once_chg_cycle_status;
+	int once_vbatt_ovp_status;
 	int allow_reading_err;
 	int fastchg_break_val;
 };
@@ -673,6 +678,10 @@ struct oplus_chg_track {
 	wait_queue_head_t upload_wq;
 
 	struct workqueue_struct *trigger_upload_wq;
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	struct kernel_packet_info *dcs_info;
+#endif
 	struct delayed_work upload_info_dwork;
 	struct mutex dcs_info_lock;
 	int dwork_retry_cnt;
@@ -695,6 +704,7 @@ struct oplus_chg_track {
 	oplus_chg_track_trigger charging_break_trigger;
 	oplus_chg_track_trigger wls_charging_break_trigger;
 	oplus_chg_track_trigger plugout_state_trigger;
+	oplus_chg_track_trigger *ntc_abnormal_info_trigger;
 	struct delayed_work uisoc_load_trigger_work;
 	struct delayed_work soc_trigger_work;
 	struct delayed_work uisoc_trigger_work;
@@ -708,6 +718,7 @@ struct oplus_chg_track {
 	struct delayed_work wls_charging_break_trigger_work;
 	struct delayed_work check_wired_online_work;
 	struct delayed_work plugout_state_work;
+	struct delayed_work ntc_abnormal_info_trigger_work;
 
 	char voocphy_name[OPLUS_CHG_TRACK_VOOCPHY_NAME_LEN];
 
@@ -717,6 +728,8 @@ struct oplus_chg_track {
 
 	struct mutex access_lock;
 	struct mutex online_hold_lock;
+	struct mutex ntc_abnormal_info_lock;
+	bool ntc_abnormal_inited;
 };
 
 struct type_reason_table {
@@ -734,10 +747,93 @@ static struct dentry *track_debugfs_root;
 static DEFINE_MUTEX(debugfs_root_mutex);
 static DEFINE_SPINLOCK(adsp_fifo_lock);
 
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+static int oplus_chg_track_pack_dcs_info(struct oplus_chg_track *chip);
+#endif
 static int oplus_chg_track_get_charger_type(struct oplus_chg_chip *chip, struct oplus_chg_track_status *track_status,
 					    int type);
 static int oplus_chg_track_obtain_wls_break_sub_crux_info(struct oplus_chg_track *track_chip, char *crux_info);
 static int oplus_chg_track_get_local_time_s(void);
+
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+static struct type_reason_table track_type_reason_table[] = {
+	{ TRACK_NOTIFY_TYPE_SOC_JUMP, "soc_error" },
+	{ TRACK_NOTIFY_TYPE_GENERAL_RECORD, "general_record" },
+	{ TRACK_NOTIFY_TYPE_NO_CHARGING, "no_charging" },
+	{ TRACK_NOTIFY_TYPE_CHARGING_SLOW, "charge_slow" },
+	{ TRACK_NOTIFY_TYPE_CHARGING_BREAK, "charge_break" },
+	{ TRACK_NOTIFY_TYPE_DEVICE_ABNORMAL, "device_abnormal" },
+	{ TRACK_NOTIFY_TYPE_SOFTWARE_ABNORMAL, "software_abnormal" },
+};
+
+static struct flag_reason_table track_flag_reason_table[] = {
+	{ TRACK_NOTIFY_FLAG_DEFAULT, "default" },
+	{ TRACK_NOTIFY_FLAG_UI_SOC_LOAD_JUMP, "UiSoc_LoadSocJump" },
+	{ TRACK_NOTIFY_FLAG_SOC_JUMP, "SocJump" },
+	{ TRACK_NOTIFY_FLAG_UI_SOC_JUMP, "UiSocJump" },
+	{ TRACK_NOTIFY_FLAG_UI_SOC_TO_SOC_JUMP, "UiSoc-SocJump" },
+
+	{ TRACK_NOTIFY_FLAG_CHARGER_INFO, "ChargerInfo" },
+	{ TRACK_NOTIFY_FLAG_UISOC_KEEP_1_T_INFO, "UisocKeep1TInfo" },
+	{ TRACK_NOTIFY_FLAG_VBATT_TOO_LOW_INFO, "VbattTooLowInfo" },
+	{ TRACK_NOTIFY_FLAG_USBTEMP_INFO, "UsbTempInfo" },
+	{ TRACK_NOTIFY_FLAG_VBATT_DIFF_OVER_INFO, "VbattDiffOverInfo" },
+	{ TRACK_NOTIFY_FLAG_SERVICE_UPDATE_WLS_THIRD_INFO, "UpdateWlsThirdInfo" },
+	{ TRACK_NOTIFY_FLAG_WLS_TRX_INFO, "WlsTrxInfo" },
+	{ TRACK_NOTIFY_FLAG_PARALLELCHG_FOLDMODE_INFO, "ParallelChgFoldModeInfo" },
+	{ TRACK_NOTIFY_FLAG_MMI_CHG_INFO, "MmiChgInfo" },
+	{ TRACK_NOTIFY_FLAG_SLOW_CHG_INFO, "SlowChgInfo" },
+	{ TRACK_NOTIFY_FLAG_CHG_CYCLE_INFO, "ChgCycleInfo" },
+	{ TRACK_NOTIFY_FLAG_TTF_INFO, "TtfInfo" },
+	{ TRACK_NOTIFY_FLAG_UISOH_INFO, "UiSohInfo" },
+	{ TRACK_NOTIFY_FLAG_GAUGE_MODE, "GaugeMode" },
+	{ TRACK_NOTIFY_FLAG_DEC_VOL_INFO, "DecVolInfo" },
+
+	{ TRACK_NOTIFY_FLAG_NO_CHARGING, "NoCharging" },
+	{ TRACK_NOTIFY_FLAG_NO_CHARGING_OTG_ONLINE, "OtgOnline" },
+	{ TRACK_NOTIFY_FLAG_NO_CHARGING_VBATT_LEAK, "VBattLeakage" },
+
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_TBATT_WARM, "BattTempWarm" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_TBATT_COLD, "BattTempCold" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_NON_STANDARD_PA, "NonStandardAdatpter" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_BATT_CAP_HIGH, "BattCapHighWhenPlugin" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_COOLDOWN, "CoolDownCtlLongTime" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_WLS_SKEW, "WlsSkew" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_VERITY_FAIL, "VerityFail" },
+	{ TRACK_NOTIFY_FLAG_CHG_SLOW_OTHER, "Other" },
+
+	{ TRACK_NOTIFY_FLAG_FAST_CHARGING_BREAK, "FastChgBreak" },
+	{ TRACK_NOTIFY_FLAG_GENERAL_CHARGING_BREAK, "GeneralChgBreak" },
+	{ TRACK_NOTIFY_FLAG_WLS_CHARGING_BREAK, "WlsChgBreak" },
+	{ TRACK_NOTIFY_FLAG_CHG_FEED_LIQUOR, "ChgintoliquidAbnormal" },
+
+	{ TRACK_NOTIFY_FLAG_WLS_TRX_ABNORMAL, "WlsTrxAbnormal" },
+	{ TRACK_NOTIFY_FLAG_GPIO_ABNORMAL, "GpioAbnormal" },
+	{ TRACK_NOTIFY_FLAG_CP_ABNORMAL, "CpAbnormal" },
+	{ TRACK_NOTIFY_FLAG_PLAT_PMIC_ABNORMAL, "PlatPmicAbnormal" },
+	{ TRACK_NOTIFY_FLAG_EXTERN_PMIC_ABNORMAL, "ExternPmicAbnormal" },
+	{ TRACK_NOTIFY_FLAG_GAGUE_ABNORMAL, "GagueAbnormal" },
+	{ TRACK_NOTIFY_FLAG_DCHG_ABNORMAL, "DchgAbnormal" },
+	{ TRACK_NOTIFY_FLAG_PARALLEL_UNBALANCE_ABNORMAL, "ParallelUnbalance" },
+	{ TRACK_NOTIFY_FLAG_MOS_ERROR_ABNORMAL, "MosError" },
+	{ TRACK_NOTIFY_FLAG_HK_ABNORMAL, "HouseKeepingAbnormal" },
+	{ TRACK_NOTIFY_FLAG_UFCS_IC_ABNORMAL, "UFCSICAbnormal" },
+	{ TRACK_NOTIFY_FLAG_ADAPTER_ABNORMAL, "AdapterAbnormal" },
+	{ TRACK_NOTIFY_FLAG_NTC_ABNORMAL, "NTCAbnormal" },
+
+	{ TRACK_NOTIFY_FLAG_UFCS_ABNORMAL, "UfcsAbnormal" },
+	{ TRACK_NOTIFY_FLAG_COOLDOWN_ABNORMAL, "CoolDownAbnormal" },
+	{ TRACK_NOTIFY_FLAG_SMART_CHG_ABNORMAL, "SmartChgAbnormal" },
+	{ TRACK_NOTIFY_FLAG_WLS_THIRD_ENCRY_ABNORMAL, "WlsThirdEncryAbnormal" },
+	{ TRACK_NOTIFY_FLAG_PEN_MATCH_STATE_ABNORMAL, "PenMatchStateAbnormal" },
+	{ TRACK_NOTIFY_FLAG_PPS_ABNORMAL, "PPSAbnormal" },
+	{ TRACK_NOTIFY_FLAG_FASTCHG_START_ABNORMAL, "FastchgStartClearError" },
+	{ TRACK_NOTIFY_FLAG_DUAL_CHAN_ABNORMAL, "DualChanAbnormal" },
+	{ TRACK_NOTIFY_FLAG_DUMMY_START_ABNORMAL, "DummyStartClearError" },
+};
+#endif
 
 static struct oplus_chg_track_type base_type_table[] = { { POWER_SUPPLY_TYPE_UNKNOWN, TRACK_POWER_MW(2500), "unknow" },
 							 { POWER_SUPPLY_TYPE_USB, TRACK_POWER_MW(2500), "sdp" },
@@ -3275,6 +3371,8 @@ static void oplus_chg_track_record_charger_info(struct oplus_chg_chip *chip, opl
 
 	index += snprintf(&(p_trigger_data->crux_info[index]), OPLUS_CHG_TRACK_CURX_INFO_LEN - index,
 			  "$$chg_cycle_status@@%d", track_status->once_chg_cycle_status);
+	index += snprintf(&(p_trigger_data->crux_info[index]), OPLUS_CHG_TRACK_CURX_INFO_LEN - index, "$$vbatt_ovp@@%d",
+			  track_status->once_vbatt_ovp_status);
 
 	oplus_chg_track_record_general_info(chip, track_status, p_trigger_data, index);
 }
@@ -3600,6 +3698,37 @@ static int oplus_chg_track_init(struct oplus_chg_track *track_dev)
 	return ret;
 }
 
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+static int oplus_chg_track_get_type_tag(int type_reason, char *type_reason_tag)
+{
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(track_type_reason_table); i++) {
+		if (track_type_reason_table[i].type_reason == type_reason) {
+			strncpy(type_reason_tag, track_type_reason_table[i].type_reason_tag,
+				OPLUS_CHG_TRIGGER_REASON_TAG_LEN - 1);
+			break;
+		}
+	}
+	return i;
+}
+
+static int oplus_chg_track_get_flag_tag(int flag_reason, char *flag_reason_tag)
+{
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(track_flag_reason_table); i++) {
+		if (track_flag_reason_table[i].flag_reason == flag_reason) {
+			strncpy(flag_reason_tag, track_flag_reason_table[i].flag_reason_tag,
+				OPLUS_CHG_TRIGGER_REASON_TAG_LEN - 1);
+			break;
+		}
+	}
+	return i;
+}
+#endif
+
 static bool oplus_chg_track_trigger_data_is_valid(oplus_chg_track_trigger *pdata)
 {
 	int i;
@@ -3704,6 +3833,10 @@ int oplus_chg_track_upload_trigger_data(oplus_chg_track_trigger data)
 	pr_debug("type_reason:%d, flag_reason:%d, crux_info[%s]\n", chip->trigger_data.type_reason,
 		 chip->trigger_data.flag_reason, chip->trigger_data.crux_info);
 	chip->trigger_data_ok = true;
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	oplus_chg_track_get_flag_tag(chip->trigger_data.flag_reason, flag_reason_tag);
+#endif
 	chg_exception_report(&chip->track_cfg.exception_data, chip->trigger_data.type_reason,
 			     chip->trigger_data.flag_reason, flag_reason_tag, sizeof(flag_reason_tag));
 	mutex_unlock(&chip->trigger_data_lock);
@@ -3741,6 +3874,10 @@ static int oplus_chg_track_thread(void *data)
 			pr_err("oplus chg false wakeup, rc=%d\n", rc);
 		mutex_lock(&chip->trigger_data_lock);
 		chip->trigger_data_ok = false;
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+		oplus_chg_track_pack_dcs_info(chip);
+#endif
 		chip->dwork_retry_cnt = OPLUS_CHG_TRACK_DWORK_RETRY_CNT;
 		queue_delayed_work(chip->trigger_upload_wq, &chip->upload_info_dwork, 0);
 		mutex_unlock(&chip->trigger_data_lock);
@@ -3931,6 +4068,72 @@ static int oplus_chg_track_get_local_time_s(void)
 	return local_time_s;
 }
 
+/*
+* track sub version
+* 3: default version for chg track
+* 3.1: add for solve the problem of incorrect PPS records and power mode record error code
+* 3.2: add for solve the problem of adapter_t symbol NULL
+* 3.3: break records and mmi_chg and fastchg_to_normal and soc jump optimize
+* 3.4: add app record track feature, smart chg feature, wls third feature
+* 3.5: add the pd_sdp type to solve the problem that the type is unknown
+*      add match_power to judge the power match between the adapter and the mobile phone
+*      add 44W/55W/88W/125W adapter id
+*      add pd_svooc type
+* 3.6: add app record track feature
+* 3.7: update reserve soc track
+*/
+#define TRACK_VERSION "3.7"
+
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+static int oplus_chg_track_pack_dcs_info(struct oplus_chg_track *chip)
+{
+	int ret = 0;
+	int len;
+	struct rtc_time tm;
+	char *log_tag = OPLUS_CHG_TRACK_LOG_TAG;
+	char *event_id = OPLUS_CHG_TRACK_EVENT_ID;
+	char *p_data = (char *)(chip->dcs_info);
+	char type_reason_tag[OPLUS_CHG_TRIGGER_REASON_TAG_LEN] = { 0 };
+	char flag_reason_tag[OPLUS_CHG_TRIGGER_REASON_TAG_LEN] = { 0 };
+
+	memset(p_data, 0x0, sizeof(char) * OPLUS_CHG_TRIGGER_MSG_LEN);
+	ret += sizeof(struct kernel_packet_info);
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, OPLUS_CHG_TRACK_EVENT_ID);
+
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, "$$track_ver@@%s", TRACK_VERSION);
+
+	oplus_chg_track_get_type_tag(chip->trigger_data.type_reason, type_reason_tag);
+	type_reason_tag[OPLUS_CHG_TRIGGER_REASON_TAG_LEN - 1] = 0;
+	oplus_chg_track_get_flag_tag(chip->trigger_data.flag_reason, flag_reason_tag);
+	flag_reason_tag[OPLUS_CHG_TRIGGER_REASON_TAG_LEN - 1] = 0;
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, "$$type_reason@@%s", type_reason_tag);
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, "$$flag_reason@@%s", flag_reason_tag);
+
+	oplus_chg_track_get_current_time(&tm);
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, "$$time@@[%04d-%02d-%02d %02d:%02d:%02d]",
+			tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+	ret += snprintf(&p_data[ret], OPLUS_CHG_TRIGGER_MSG_LEN - ret, "%s", chip->trigger_data.crux_info);
+
+	len = strlen(&(p_data[sizeof(struct kernel_packet_info)]));
+	if (len) {
+		mutex_lock(&chip->dcs_info_lock);
+		memset(chip->dcs_info, 0x0, sizeof(struct kernel_packet_info));
+
+		chip->dcs_info->type = 1;
+		memcpy(chip->dcs_info->log_tag, log_tag, strlen(log_tag));
+		memcpy(chip->dcs_info->event_id, event_id, strlen(event_id));
+		chip->dcs_info->payload_length = len + 1;
+		mutex_unlock(&chip->dcs_info_lock);
+		pr_info("%s\n", chip->dcs_info->payload);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+#endif
+
 static void oplus_chg_track_upload_info_dwork(struct work_struct *work)
 {
 	int ret = 0;
@@ -3940,6 +4143,13 @@ static void oplus_chg_track_upload_info_dwork(struct work_struct *work)
 	if (!chip)
 		return;
 
+	mutex_lock(&chip->dcs_info_lock);
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE)
+	ret = fb_kevent_send_to_user(chip->dcs_info);
+#elif defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	ret = kevent_send_to_user(chip->dcs_info);
+#endif
+	mutex_unlock(&chip->dcs_info_lock);
 	if (!ret)
 		complete(&chip->trigger_ack);
 	else if (chip->dwork_retry_cnt > 0)
@@ -4037,6 +4247,9 @@ static int oplus_chg_track_handle_wls_type_info(struct oplus_chg_track_status *t
 	struct oplus_chg_track *chip = g_track_chip;
 	int rc;
 	union oplus_chg_mod_propval pval;
+
+	if (!g_track_chip)
+		return -EINVAL;
 
 	track_status->power_info.power_type = TRACK_CHG_TYPE_WIRELESS;
 	memset(track_status->power_info.power_mode, 0, sizeof(track_status->power_info.power_mode));
@@ -4159,7 +4372,7 @@ static int oplus_chg_track_cal_chg_common_mesg(struct oplus_chg_chip *chip, stru
 	static bool pre_slow_chg = false;
 	struct rtc_time tm;
 
-	if (chip == NULL || track_status == NULL)
+	if (chip == NULL || track_status == NULL || track_chip == NULL)
 		return -EINVAL;
 
 	if (chip->temperature > track_status->chg_max_temp)
@@ -4207,6 +4420,9 @@ static int oplus_chg_track_cal_chg_common_mesg(struct oplus_chg_chip *chip, stru
 
 	if (!track_status->once_chg_cycle_status && chip->chg_cycle_status)
 		track_status->once_chg_cycle_status = chip->chg_cycle_status;
+
+	if (!track_status->once_vbatt_ovp_status && oplus_voocphy_get_vbatt_ovp_status())
+		track_status->once_vbatt_ovp_status = true;
 
 	mutex_lock(&chip->slow_chg_mutex);
 	if (!pre_slow_chg && chip->slow_chg_enable) {
@@ -4593,7 +4809,7 @@ static void oplus_chg_track_record_break_charging_info(struct oplus_chg_track *t
 		    (oplus_chg_adspvoocphy_get_abnormal_adapter_disconnect_cnt() > 0)) {
 			index += snprintf(&(track_chip->charging_break_trigger.crux_info[index]),
 					  OPLUS_CHG_TRACK_CURX_INFO_LEN - index,
-					  "$$dev_id@@adapter$$err_reason@@impedance_large$$dis_cnt@@%d",
+					  "$$device_id@@adapter$$err_reason@@impedance_large$$dis_cnt@@%d",
 					  chip->abnormal_adapter_dis_cnt);
 		}
 		pr_debug("wired[%s]\n", track_chip->charging_break_trigger.crux_info);
@@ -4701,6 +4917,9 @@ int oplus_chg_track_set_fastchg_break_code(int fastchg_break_code)
 int oplus_chg_track_set_fastchg_break_code_with_val(int fastchg_break_code, int val)
 {
 	struct oplus_chg_track_status *track_status;
+
+	if (!g_track_chip)
+		return -EINVAL;
 
 	track_status = &g_track_chip->track_status;
 	track_status->fastchg_break_val = val;
@@ -5932,6 +6151,7 @@ static int oplus_chg_track_status_reset_when_plugin(struct oplus_chg_chip *chip,
 	track_status->prop_status = chip->prop_status;
 	track_status->once_mmi_chg = false;
 	track_status->once_chg_cycle_status = CHG_CYCLE_VOTER__NONE;
+	track_status->once_vbatt_ovp_status = false;
 	track_status->fastchg_to_normal = false;
 	track_status->mmi_chg_open_t = 0;
 	track_status->mmi_chg_close_t = 0;
@@ -6251,6 +6471,66 @@ static int oplus_chg_track_uisoc_soc_jump_check(struct oplus_chg_chip *chip)
 	return ret;
 }
 
+int oplus_track_upload_ntc_abnormal_info(int ntc_temp, char *ntc_name, char *scene, char *reason, char *other)
+{
+	struct oplus_chg_chip *chip = oplus_chg_get_chg_struct();
+	int index = 0;
+
+	if (!g_track_chip || !g_track_chip->ntc_abnormal_inited || !chip || !ntc_name || !scene || !reason)
+		return -EINVAL;
+
+	mutex_lock(&g_track_chip->ntc_abnormal_info_lock);
+	if (g_track_chip->ntc_abnormal_info_trigger)
+		kfree(g_track_chip->ntc_abnormal_info_trigger);
+
+	g_track_chip->ntc_abnormal_info_trigger = kzalloc(sizeof(oplus_chg_track_trigger), GFP_KERNEL);
+	if (!g_track_chip->ntc_abnormal_info_trigger) {
+		pr_err("ntc_abnormal_info_trigger memery alloc fail\n");
+		mutex_unlock(&g_track_chip->ntc_abnormal_info_lock);
+		return -ENOMEM;
+	}
+
+	g_track_chip->ntc_abnormal_info_trigger->type_reason = TRACK_NOTIFY_TYPE_DEVICE_ABNORMAL;
+	g_track_chip->ntc_abnormal_info_trigger->flag_reason = TRACK_NOTIFY_FLAG_NTC_ABNORMAL;
+	index += snprintf(&(g_track_chip->ntc_abnormal_info_trigger->crux_info[index]),
+			  OPLUS_CHG_TRACK_CURX_INFO_LEN - index,
+			  "$$device_id@@%s$$err_scene@@%s$$err_reason@@%s$$ntc_temp@@%d", ntc_name, scene, reason,
+			  ntc_temp);
+
+	index += snprintf(&(g_track_chip->ntc_abnormal_info_trigger->crux_info[index]),
+			  OPLUS_CHG_TRACK_CURX_INFO_LEN - index, "$$batt_temp@@%d$$shell_temp@@%d$$subboard_temp@@%d",
+			  chip->tbatt_temp, chip->shell_temp, chip->subboard_temp);
+
+	if (other)
+		index += snprintf(&(g_track_chip->ntc_abnormal_info_trigger->crux_info[index]),
+				  OPLUS_CHG_TRACK_CURX_INFO_LEN - index, "$$other@@%s", other);
+
+	schedule_delayed_work(&g_track_chip->ntc_abnormal_info_trigger_work, 0);
+
+	chg_info("success\n");
+	return 0;
+}
+
+static void oplus_chg_track_ntc_abnormal_info_trigger_work(struct work_struct *work)
+{
+	struct delayed_work *dwork = to_delayed_work(work);
+	struct oplus_chg_track *chip = container_of(dwork, struct oplus_chg_track, ntc_abnormal_info_trigger_work);
+
+	if (chip->ntc_abnormal_info_trigger) {
+		oplus_chg_track_upload_trigger_data(*(chip->ntc_abnormal_info_trigger));
+		kfree(chip->ntc_abnormal_info_trigger);
+		chip->ntc_abnormal_info_trigger = NULL;
+	}
+	mutex_unlock(&chip->ntc_abnormal_info_lock);
+}
+
+static void oplus_chg_track_ntc_abnormal_info_init(struct oplus_chg_track *track_dev)
+{
+	mutex_init(&track_dev->ntc_abnormal_info_lock);
+	INIT_DELAYED_WORK(&track_dev->ntc_abnormal_info_trigger_work, oplus_chg_track_ntc_abnormal_info_trigger_work);
+	track_dev->ntc_abnormal_inited = true;
+}
+
 int oplus_chg_track_comm_monitor(void)
 {
 	int ret = 0;
@@ -6347,6 +6627,16 @@ static int oplus_chg_track_driver_probe(struct platform_device *pdev)
 		goto kfifo_err;
 	}
 
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	track_dev->dcs_info =
+		(struct kernel_packet_info *)kmalloc(sizeof(char) * OPLUS_CHG_TRIGGER_MSG_LEN, GFP_KERNEL);
+	if (!track_dev->dcs_info) {
+		rc = -ENOMEM;
+		goto dcs_info_kmalloc_fail;
+	}
+#endif
+
 	track_dev->dev = &pdev->dev;
 	platform_set_drvdata(pdev, track_dev);
 
@@ -6382,6 +6672,7 @@ static int oplus_chg_track_driver_probe(struct platform_device *pdev)
 	oplus_chg_track_uisoh_err_init(track_dev);
 	oplus_parallelchg_track_foldmode_init(track_dev);
 	oplus_chg_track_ttf_info_init(track_dev);
+	oplus_chg_track_ntc_abnormal_info_init(track_dev);
 
 	rc = oplus_chg_adsp_track_thread_init(track_dev);
 	if (rc < 0) {
@@ -6408,6 +6699,11 @@ track_kthread_init_err:
 parse_dt_err:
 debugfs_create_fail:
 bcc_info_kzmalloc_fail:
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	kfree(track_dev->dcs_info);
+dcs_info_kmalloc_fail:
+#endif
 	kfifo_free(&(track_dev->adsp_fifo));
 kfifo_err:
 	devm_kfree(&pdev->dev, track_dev);
@@ -6422,6 +6718,10 @@ static int oplus_chg_track_driver_remove(struct platform_device *pdev)
 
 	if (track_debugfs_root)
 		debugfs_remove_recursive(track_debugfs_root);
+#if defined(CONFIG_OPLUS_FEATURE_FEEDBACK) || defined(CONFIG_OPLUS_FEATURE_FEEDBACK_MODULE) ||                         \
+	defined(CONFIG_OPLUS_KEVENT_UPLOAD)
+	kfree(track_dev->dcs_info);
+#endif
 	kfree(track_dev->track_status.bcc_info);
 	kfifo_free(&(track_dev->adsp_fifo));
 	devm_kfree(&pdev->dev, track_dev);

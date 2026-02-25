@@ -50,6 +50,7 @@ extern int enable_charger_log;
 
 static struct oplus_vooc_chip *g_vooc_chip = NULL;
 static struct oplus_vooc_cp *g_vooc_cp = NULL;
+static bool force_allow_reading = true;
 bool __attribute__((weak)) oplus_get_fg_i2c_err_occured(void)
 {
 	return false;
@@ -2049,8 +2050,8 @@ void fw_update_thread(struct work_struct *work)
 		} while ((ret < 0) && (--retry > 0));
 		chg_debug(" retry times %d, chip->fw_path[%s]\n", 5 - retry, chip->fw_path);
 		if (!ret) {
-			chip->firmware_data = fw->data + 80 /* header */;
-			chip->fw_data_count = fw->size - 80 /* header */ - 128 /* footer */;
+			chip->firmware_data = fw->data;
+			chip->fw_data_count = fw->size;
 			chip->fw_data_version = chip->firmware_data[chip->fw_data_count - 4];
 			chg_debug("count:0x%x, version:0x%x\n", chip->fw_data_count, chip->fw_data_version);
 			if (chip->vops->fw_check_then_recover) {
@@ -2111,8 +2112,8 @@ void fw_update_thread_fix(struct work_struct *work)
 		} while ((ret < 0) && (--retry > 0));
 		chg_debug(" retry times %d, chip->fw_path[%s]\n", 5 - retry, chip->fw_path);
 		if (!ret) {
-			chip->firmware_data = fw->data + 80 /* header */;
-			chip->fw_data_count = fw->size - 80 /* header */ - 128 /* footer */;
+			chip->firmware_data = fw->data;
+			chip->fw_data_count = fw->size;
 			chip->fw_data_version = chip->firmware_data[chip->fw_data_count - 4];
 			chg_debug("count:0x%x, version:0x%x\n", chip->fw_data_count, chip->fw_data_version);
 			if (chip->vops->fw_check_then_recover_fix) {
@@ -2184,7 +2185,7 @@ void oplus_vooc_shedule_fastchg_work(void)
 	}
 }
 
-static int vooc_dump_log_data(char *buffer, int size, void *dev_data)
+static int voocphy_dump_log_data(char *buffer, int size, void *dev_data)
 {
 	struct oplus_vooc_chip *chip = dev_data;
 
@@ -2198,22 +2199,22 @@ static int vooc_dump_log_data(char *buffer, int size, void *dev_data)
 	return 0;
 }
 
-static int vooc_get_log_head(char *buffer, int size, void *dev_data)
+static int voocphy_get_log_head(char *buffer, int size, void *dev_data)
 {
 	struct oplus_vooc_chip *chip = dev_data;
 
 	if (!buffer || !chip)
 		return -ENOMEM;
 
-	snprintf(buffer, size, ",fastchg_start,dummy_start,vooc_online_keep");
+	snprintf(buffer, size, ",[voocphy]:fastchg_start,dummy_start,vooc_online_keep");
 
 	return 0;
 }
 
-static struct battery_log_ops battlog_vooc_ops = {
-	.dev_name = "vooc",
-	.dump_log_head = vooc_get_log_head,
-	.dump_log_content = vooc_dump_log_data,
+static struct battery_log_ops battlog_voocphy_ops = {
+	.dev_name = "voocphy",
+	.dump_log_head = voocphy_get_log_head,
+	.dump_log_content = voocphy_dump_log_data,
 };
 
 static ssize_t proc_fastchg_fw_update_write(struct file *file, const char __user *buff, size_t len, loff_t *data)
@@ -2371,8 +2372,8 @@ void oplus_vooc_init(struct oplus_vooc_chip *chip)
 	INIT_DELAYED_WORK(&chip->bcc_get_max_min_curr, oplus_vooc_bcc_get_curr_func);
 	g_vooc_chip = chip;
 	chip->vops->eint_regist(chip);
-	battlog_vooc_ops.dev_data = (void *)chip;
-	battery_log_ops_register(&battlog_vooc_ops);
+	battlog_voocphy_ops.dev_data = (void *)chip;
+	battery_log_ops_register(&battlog_voocphy_ops);
 	if (chip->vooc_fw_update_newmethod) {
 		if (oplus_is_rf_ftm_mode()) {
 			return;
@@ -2436,7 +2437,7 @@ void oplus_vooc_print_log(void)
 bool oplus_vooc_get_allow_reading(void)
 {
 	if (!g_vooc_chip) {
-		return true;
+		return force_allow_reading;
 	} else {
 		if (g_vooc_chip->support_vooc_by_normal_charger_path &&
 		    g_vooc_chip->fast_chg_type == CHARGER_SUBTYPE_FASTCHG_VOOC) {
@@ -2444,6 +2445,15 @@ bool oplus_vooc_get_allow_reading(void)
 		} else {
 			return g_vooc_chip->allow_reading;
 		}
+	}
+}
+
+void oplus_vooc_set_allow_reading(bool state)
+{
+	if (!g_vooc_chip) {
+		force_allow_reading = state;
+	} else {
+		g_vooc_chip->allow_reading = state;
 	}
 }
 
