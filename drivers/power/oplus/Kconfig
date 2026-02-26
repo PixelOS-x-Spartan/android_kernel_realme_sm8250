@@ -1,3 +1,9 @@
+config OPLUS_SM8250_CHARGER
+	tristate "OPLUS SM8250 charger driver"
+	depends on MFD_SPMI_PMIC
+	help
+	  Enables support for the oplus charging framework on SM8250 (Kona)
+
 menuconfig OPLUS_CHARGER
 	bool "OPLUS charging system"
 	depends on I2C
